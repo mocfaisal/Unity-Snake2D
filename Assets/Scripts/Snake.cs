@@ -17,6 +17,7 @@ public class Snake : MonoBehaviour
     private float gridMoveTimer;
     private float gridMoveTimerMax;
     public float snakeSpeed = 25f;
+
     AudioSource audioObj;
     public AudioClip diedSound;
     private LevelGrid levelGrid;
@@ -38,8 +39,8 @@ public class Snake : MonoBehaviour
         audioObj = GetComponent<AudioSource>();
 
         snakeMovePositionList = new List<SnakeMovePosition>();
-        snakeBodySize = 0;
         snakeBodyPartList = new List<SnakeBodyPart>();
+        snakeBodySize = 0;
 
         //transform.localScale = new Vector3(2f, 2f, 0);
     }
@@ -90,7 +91,13 @@ public class Snake : MonoBehaviour
             gridMoveTimer -= gridMoveTimerMax;
 
             // add posisi snake
-            SnakeMovePosition snakeMovePosition = new SnakeMovePosition(gridPosition, gridMoveDirection);
+            SnakeMovePosition prevSnakePosition = null;
+            if (snakeMovePositionList.Count > 0)
+            {
+                prevSnakePosition = snakeMovePositionList[0];
+            }
+
+            SnakeMovePosition snakeMovePosition = new SnakeMovePosition(prevSnakePosition, gridPosition, gridMoveDirection);
             snakeMovePositionList.Insert(0, snakeMovePosition);
 
 
@@ -118,24 +125,29 @@ public class Snake : MonoBehaviour
             }
 
 
-
+            // jika list move posisi snake lebih besar dari sizeBody
+            // maka remove index -1
             if (snakeMovePositionList.Count >= snakeBodySize + 1)
             {
                 snakeMovePositionList.RemoveAt(snakeMovePositionList.Count - 1);
             }
 
-            /*  for (int i = 0; i < snakeMovePositionList.Count; i++)
-              {
-                  // add snake size body parts
-                  Vector2Int snakeMovePosition = snakeMovePositionList[i];
-                  World_Sprite worldSprite = World_Sprite.Create(new Vector3(snakeMovePosition.x, snakeMovePosition.y), Vector3.one * .5f, Color.white);
-                  FunctionTimer.Create(worldSprite.DestroySelf, gridMoveTimerMax);
-              }*/
+            updateSnakeBodyPart();
+
+            foreach (SnakeBodyPart snakeBodyPart in snakeBodyPartList)
+            {
+                Vector2Int snakeBodyPartGridPosition = snakeBodyPart.getGridPosition();
+                // jika head kena posisi body
+                if (gridPosition == snakeBodyPartGridPosition)
+                {
+                    // game over
+                    CMDebug.TextPopup("Dead!", transform.position);
+                }
+            }
 
             transform.position = new Vector3(gridPosition.x, gridPosition.y);
             transform.eulerAngles = new Vector3(0, 0, GetAngleFromVector(gridMoveDirectionVector) - 90);
 
-            updateSnakeBodyPart();
 
 
 
@@ -201,6 +213,9 @@ public class Snake : MonoBehaviour
         return gridPositionList;
     }
 
+    /*
+    Handles Position from the snakes body
+    */
     class SnakeBodyPart
     {
         private SnakeMovePosition snakeMovePosition;
@@ -231,35 +246,103 @@ public class Snake : MonoBehaviour
             {
                 default:
                 case Direction.Up:
-                    angle = 0;
+                    //angle = 0;
+                    // snake ke arah atas
+                    switch (snakeMovePosition.getPrevDirection())
+                    {
+                        default:
+                            angle = 0;
+                            break;
+                        case Direction.Left:
+                            // sebelumnya snake ke arah kiri
+                            angle = 0 + 45;
+                            break;
+                        case Direction.Right:
+                            // sebelumnya snake ke arah kanan
+                            angle = 0 - 45;
+                            break;
+                    }
                     break;
 
                 case Direction.Down:
-                    angle = 180;
+                    //angle = 180;
+                    // snake ke arah bawah
+                    switch (snakeMovePosition.getPrevDirection())
+                    {
+                        default:
+                            angle = 180;
+                            break;
+                        case Direction.Left:
+                            // sebelumnya snake ke arah kiri
+                            angle = 180 + 45;
+                            break;
+                        case Direction.Right:
+                            // sebelumnya snake ke arah kanan
+                            angle = 180 - 45;
+                            break;
+                    }
                     break;
 
                 case Direction.Left:
-                    angle = -90;
+                    //angle = -90;
+                    // snake ke arah kiri
+                    switch (snakeMovePosition.getPrevDirection())
+                    {
+                        default:
+                            angle = -90;
+                            break;
+                        case Direction.Down:
+                            // sebelumnya snake ke arah bawah
+                            angle = -45;
+                            break;
+                        case Direction.Up:
+                            // sebelumnya snake ke arah atas
+                            angle = 45;
+                            break;
+                    }
                     break;
 
                 case Direction.Right:
-                    angle = 90;
+                    //angle = 90;
+                    // snake ke arah kanan
+                    switch (snakeMovePosition.getPrevDirection())
+                    {
+                        default:
+                            angle = 90;
+                            break;
+                        case Direction.Down:
+                            // sebelumnya snake ke arah bawah
+                            angle = 45;
+                            break;
+                        case Direction.Up:
+                            // sebelumnya snake ke arah atas
+                            angle = -45;
+                            break;
+                    }
                     break;
             }
 
             // set rotasi
             transform.eulerAngles = new Vector3(0, 0, angle);
         }
-
+        public Vector2Int getGridPosition()
+        {
+            return this.snakeMovePosition.getGridPosition();
+        }
     }
 
+    /*
+     Handles One Move Position from the snakes
+     */
     private class SnakeMovePosition
     {
+        private SnakeMovePosition prevSnakeMovePosition;
         public Vector2Int gridPosition;
         private Direction direction;
 
-        public SnakeMovePosition(Vector2Int gridPosition, Direction direction)
+        public SnakeMovePosition(SnakeMovePosition prevSnakeMovePosition, Vector2Int gridPosition, Direction direction)
         {
+            this.prevSnakeMovePosition = prevSnakeMovePosition;
             this.gridPosition = gridPosition;
             this.direction = direction;
         }
@@ -270,5 +353,16 @@ public class Snake : MonoBehaviour
         }
 
         public Direction getDirection() { return direction; }
+        public Direction getPrevDirection()
+        {
+            if (this.prevSnakeMovePosition == null)
+            {
+                return Direction.Right;
+            }
+            else
+            {
+                return prevSnakeMovePosition.direction;
+            }
+        }
     }
 }
