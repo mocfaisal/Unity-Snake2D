@@ -12,26 +12,42 @@ public class Snake : MonoBehaviour
         Left, Right, Up, Down
     }
 
+    public enum State
+    {
+        Alive,
+        Dead
+    }
+
+    public GameHandler gameHandler;
+
+    public State state;
     private Direction gridMoveDirection;
     private Vector2Int gridPosition;
     private float gridMoveTimer;
     private float gridMoveTimerMax;
-    public float snakeSpeed = 25f;
+    public float snakeSpeed = 25f; // mkain kecil makin cepat
+    public ScoreWindow scoreWindow;
 
     AudioSource audioObj;
-    public AudioClip diedSound;
+    private AudioClip diedSound;
+    private AudioClip coinSound;
+    private AudioClip completeSound;
+
     private LevelGrid levelGrid;
     private int snakeBodySize;
     private List<SnakeMovePosition> snakeMovePositionList;
     private List<SnakeBodyPart> snakeBodyPartList;
+    private int curr_score;
 
     public void Setup(LevelGrid levelGrid)
     {
         this.levelGrid = levelGrid;
     }
 
-    private void Awake()
+
+    private void Start()
     {
+        //gameHandler = new GameHandler();
         gridPosition = new Vector2Int(10, 10);
         gridMoveTimerMax = snakeSpeed / 100;
         gridMoveTimer = gridMoveTimerMax;
@@ -41,14 +57,27 @@ public class Snake : MonoBehaviour
         snakeMovePositionList = new List<SnakeMovePosition>();
         snakeBodyPartList = new List<SnakeBodyPart>();
         snakeBodySize = 0;
-
+        state = State.Alive;
         //transform.localScale = new Vector3(2f, 2f, 0);
+
+        this.diedSound = gameHandler.diedSound;
+        this.coinSound = gameHandler.coinSound;
+        this.completeSound = gameHandler.completeSound;
+
     }
 
     private void Update()
     {
-        HandleInput();
-        HandleGridMovement();
+        switch (state)
+        {
+            case State.Alive:
+                HandleInput();
+                HandleGridMovement();
+                break;
+            case State.Dead:
+                break;
+        }
+
     }
 
     private void HandleInput()
@@ -112,6 +141,7 @@ public class Snake : MonoBehaviour
             }
 
             gridPosition += gridMoveDirectionVector;
+            gridPosition = levelGrid.ValidateGridPosition(gridPosition);
 
             //Debug.Log(levelGrid.getFoodGridPosition());
 
@@ -120,6 +150,8 @@ public class Snake : MonoBehaviour
             if (is_snake_eat_food)
             {
                 // snake eat food, then grow body size
+                //audioObj.PlayOneShot(coinSound);
+                playSound("coin");
                 snakeBodySize++;
                 createSnakeBodyPart();
             }
@@ -141,7 +173,19 @@ public class Snake : MonoBehaviour
                 if (gridPosition == snakeBodyPartGridPosition)
                 {
                     // game over
-                    CMDebug.TextPopup("Dead!", transform.position);
+                    //CMDebug.TextPopup("Dead!", transform.position);
+
+                    //died_snake();
+
+                    curr_score = GameHandler.GetScore();
+
+                    //Debug.Log(curr_score.ToString());
+
+                    bool is_finish = scoreWindow.showScorePanel(false, curr_score);
+                    if (is_finish)
+                    {
+                        died_snake();
+                    }
                 }
             }
 
@@ -179,11 +223,13 @@ public class Snake : MonoBehaviour
         return n;
     }
 
-    private void died_snake()
+    public void died_snake()
     {
         // snake died condition
         Debug.Log("DIE");
-        audioObj.PlayOneShot(diedSound);
+        state = State.Dead;
+        //audioObj.PlayOneShot(diedSound);
+        playSound("died");
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
@@ -191,7 +237,34 @@ public class Snake : MonoBehaviour
         if (collision.gameObject.tag == "Die")
         {
             //Destroy(gameObject);
-            died_snake();
+            //died_snake();
+
+            curr_score = GameHandler.GetScore();
+
+            //Debug.Log(curr_score.ToString());
+
+            bool is_finish = scoreWindow.showScorePanel(false, curr_score);
+            if (is_finish)
+            {
+                died_snake();
+            }
+        }
+    }
+
+    public void playSound(string soundName)
+    {
+        switch (soundName)
+        {
+            case "died":
+                audioObj.PlayOneShot(diedSound);
+                break;
+
+            case "win":
+                audioObj.PlayOneShot(completeSound);
+                break;
+            case "coin":
+                audioObj.PlayOneShot(coinSound);
+                break;
         }
     }
 

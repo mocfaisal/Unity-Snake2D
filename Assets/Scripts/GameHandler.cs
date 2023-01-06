@@ -6,11 +6,31 @@ using CodeMonkey.Utils;
 
 public class GameHandler : MonoBehaviour
 {
-    [SerializeField] private Snake snakez;
+    private static GameHandler instance;
+
+    [SerializeField] private Snake snake;
+    [SerializeField] private ScoreWindow scoreWindow;
     private LevelGrid levelGrid;
+    private static int curr_score;
+    private static int HighScoreInt;
+    public int curr_level;
+    public int next_level;
+    public int req_score;
+    //private int CurrScoreInt;
+    public static string indexHighscore = "highscore";
+    public AudioClip diedSound;
+    public AudioClip coinSound;
+    public AudioClip completeSound;
+
+    private void Awake()
+    {
+        instance = this;
+    }
 
     private void Start()
     {
+        HighScoreInt = PlayerPrefs.GetInt(indexHighscore, 0);
+
         Debug.Log("GameHandler.Start");
 
         /* int number = 0;
@@ -21,11 +41,38 @@ public class GameHandler : MonoBehaviour
              number++;
          }, .3f);*/
 
-        levelGrid = new LevelGrid(20, 20);
-        //snake = new Snake();
+        // ukuran box grid game
+        levelGrid = new LevelGrid(50, 50);
+        snake.Setup(levelGrid);
 
-        snakez.Setup(levelGrid);
-        levelGrid.Setup(snakez);
+        levelGrid.Setup(snake);
+        levelGrid.setScoreWindow(scoreWindow);
+        //Debug.Log("HighScoreInt : " + HighScoreInt.ToString());
+        curr_score = 0;
+
     }
 
+
+    public static int GetScore()
+    {
+        return curr_score;
+    }
+
+    public static void AddScore()
+    {
+        curr_score++;
+
+        if (HighScoreInt <= curr_score)
+        {
+            PlayerPrefs.SetInt(indexHighscore, curr_score);
+        }
+        //Debug.Log("curr_score : " + curr_score.ToString());
+        //Debug.Log("HighScoreInt : " + HighScoreInt.ToString());
+
+    }
+
+    public static int getHighScore()
+    {
+        return HighScoreInt;
+    }
 }

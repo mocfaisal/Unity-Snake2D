@@ -11,6 +11,8 @@ public class LevelGrid
     private int width;
     private int height;
     private Snake snake;
+    private ScoreWindow scoreWindow;
+    private int curr_score;
 
     public LevelGrid(int width_, int height_)
     {
@@ -30,6 +32,10 @@ public class LevelGrid
         // set spawnfood disini karena jika di construct class snake blom ke intitialize
         SpawnFood();
 
+    }
+    public void setScoreWindow(ScoreWindow scoreWindow)
+    {
+        this.scoreWindow = scoreWindow;
     }
 
     private void SpawnFood()
@@ -70,11 +76,58 @@ public class LevelGrid
         if (snakeGridPosition == foodGridPosition)
         {
             Object.Destroy(foodGameObj);
-            SpawnFood();
+            GameHandler.AddScore();
+            curr_score = GameHandler.GetScore();
+            //Debug.Log("Curr_score " + curr_score.ToString());
+
+
+            bool is_finish = scoreWindow.showScorePanel(true, curr_score);
+
+            if (is_finish)
+            {
+                // react requirement score
+                snake.playSound("win");
+                //snake.died_snake();
+                snake.state = Snake.State.Dead;
+                //Time.timeScale = 0;
+            }
+            else
+            {
+                SpawnFood();
+            }
+
             //Debug.Log("Snake Ate Apple");
             result = true;
         }
 
         return result;
+    }
+
+    public Vector2Int ValidateGridPosition(Vector2Int gridPosition)
+    {
+        // reset posisi bila keluar dari area kotak
+        // teleport kanan kiri
+        if (gridPosition.x < 0)
+        {
+            gridPosition.x = width - 1;
+        }
+
+        if (gridPosition.x > width - 1)
+        {
+            gridPosition.x = 0;
+        }
+
+        // teleport atas bawah
+        if (gridPosition.y < 0)
+        {
+            gridPosition.y = height - 1;
+        }
+
+        if (gridPosition.y > height - 1)
+        {
+            gridPosition.y = 0;
+        }
+
+        return gridPosition;
     }
 }
