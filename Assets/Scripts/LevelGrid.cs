@@ -34,10 +34,7 @@ public class LevelGrid
 
     private void SpawnFood()
     {
-        // FIXME error on spawn on random gridposition
-        // Snake class didn't intialize
-
-        //    // SpawnFood tidak di posisi diatas snake atau di body snake
+        // SpawnFood tidak di posisi diatas snake atau di body snake
         do
         {
             foodGridPosition = new Vector2Int(Random.Range(5, width), Random.Range(5, height));
@@ -53,7 +50,10 @@ public class LevelGrid
 
         foodGameObj = new GameObject("Food", typeof(SpriteRenderer));
         foodGameObj.GetComponent<SpriteRenderer>().sprite = GameAssets.i.foodSprite;
-        foodGameObj.transform.localScale += new Vector3(2f, 2f, 0);
+
+        // scale size food
+        foodGameObj.transform.localScale = new Vector3(3f, 3f, 0);
+
         foodGameObj.transform.position = new Vector3(foodGridPosition.x, foodGridPosition.y);
 
     }
