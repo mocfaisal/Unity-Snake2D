@@ -44,7 +44,8 @@ public class ScoreWindow : MonoBehaviour
         level_text.text = "Level : " + currLevel.ToString();
         high_score_count_txt.text = "" + HighScoreInt;
         req_score = gameHandler.req_score;
-        Debug.Log("req_score : " + req_score.ToString());
+        //Debug.Log("req_score : " + req_score.ToString());
+        PlayerPrefs.SetInt("level", currLevel);
 
         // Panel Score
         panelScore = FindInActiveObjectByName("panel_finish");
@@ -116,9 +117,8 @@ public class ScoreWindow : MonoBehaviour
                 //GetComponent<AudioSource>().PlayOneShot(gameCompleteSound);
                 Time.timeScale = 0;
                 is_finish = true;
-                PlayerPrefs.SetInt("level", currLevel);
-
                 int next_level = gameHandler.next_level;
+                PlayerPrefs.SetInt("level", next_level);
 
                 if (next_level == 0)
                 {
